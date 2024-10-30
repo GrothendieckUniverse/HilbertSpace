@@ -1,0 +1,10 @@
+name = "HilbertSpace"
+uuid = "e75c84ba-f281-49ed-b77e-8b6c831618f4"
+authors = ["cdqz2014 <xiaodong.hu@bc.edu>"]
+version = "0.1.0"
+
+[deps]
+MLStyle = "d8e11817-5142-5d16-987a-aa16d5891078"
+
+[compat]
+MLStyle = "0.4.17"
