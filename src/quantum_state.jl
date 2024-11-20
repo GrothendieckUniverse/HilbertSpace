@@ -1,51 +1,24 @@
-abstract type Abstract_State end
-
 #=====================================================================================================================================#
 #======================================================== Single-Particle State ======================================================#
 #=====================================================================================================================================#
 """
-General Single-Particle State `Single_Particle_State{S<:Quantum_Statistics}` 
+General Single-Particle State `Single_Particle_State{D}` <: Abstract_State`
 ---
-with `S` labelling the quantum statistics of the single-particle state.
+with `D<:Integer` the number of physical d.o.f.
 - Fields:
-    - `statistics::S`: quantum statistics of the single-particle state
-    - `dof_indices::Tuple`: tuple of indices to each physical degree of freedom. It can be either numerical (finite) or symbolic
+    - `dof_indices::Tuple`: tuple of indices to each physical d.o.f
 """
-struct Single_Particle_State{S} <: Abstract_State where {S<:Quantum_Statistics}
-    statistics::S
-    dof_indices::Tuple # tuple of indices to each physical degree of freedom. It can be either numerical (finite) or symbolic
+struct Single_Particle_State{D} <: Abstract_State where {D<:Integer}
+    dof_indices::NTuple{D,Integer} # tuple of indices to each physical d.o.f
 end
 "add a show method for `Single_Particle_State`"
-Base.show(io::IO, state::Single_Particle_State) = @match state.statistics begin
-    Fermionic() => print(io, "|f_$(state.dof_indices)⟩")
-    Bosonic() => print(io, "|b_$(state.dof_indices)⟩")
-end
+Base.show(io::IO, state::Single_Particle_State) = print(io, "ϕ_$(state.dof_indices)")
 
 
 # add comparison between `Single_Particle_State`
-Base.:(==)(state1::Single_Particle_State, state2::Single_Particle_State) = state1.statistics == state2.statistics && state1.dof_indices == state2.dof_indices
-Base.:>(state1::Single_Particle_State, state2::Single_Particle_State) = begin
-    if state1.statistics > state2.statistics
-        return true
-    else # state1.statistics <= state2.statistics
-        if state1.statistics == state2.statistics
-            return state1.dof_indices > state2.dof_indices
-        else # state1.statistics < state2.statistics
-            return false
-        end
-    end
-end
-Base.:<(state1::Single_Particle_State, state2::Single_Particle_State) = begin
-    if state1.statistics < state2.statistics
-        return true
-    else # state1.statistics >= state2.statistics
-        if state1.statistics == state2.statistics
-            return state1.dof_indices < state2.dof_indices
-        else # state1.statistics > state2.statistics
-            return false
-        end
-    end
-end
+Base.:(==)(state1::Single_Particle_State, state2::Single_Particle_State) = state1.dof_indices == state2.dof_indices
+Base.:>(state1::Single_Particle_State, state2::Single_Particle_State) = state1.dof_indices > state2.dof_indices
+Base.:<(state1::Single_Particle_State, state2::Single_Particle_State) = state1.dof_indices < state2.dof_indices
 
 
 # TODO: add arithmic operations for `Single_Particle_State` to construct (symbolic) polynomials
@@ -57,22 +30,25 @@ end
 #========================================================= Many-Particle State =======================================================#
 #=====================================================================================================================================#
 """
-General Many Particle State `Many_Particle_State{N<:Integer}`
+General Many Particle State `Many_Particle_State{N} <: Abstract_State`
 ---
-with `N` the number of single-particle states. Note: this representation even support *infinitely* (or even *uncountably infinitely*) occupied many-particle states!
+with `N<:Integer` the number of single-particle states.
+- Fields:
+    - `single_particle_states::SVector{N,<:Single_Particle_State}`: static vector of single-particle states
 """
-struct Many_Particle_State{N,S} <: Abstract_State where {N<:Integer,S<:Quantum_Statistics}
-    single_particle_states::NTuple{N,<:Single_Particle_State{S}}
+struct Many_Particle_State{N} <: Abstract_State where {N<:Integer}
+    single_particle_states::SVector{N,<:Single_Particle_State}
 end
 "add a show method for `Many_Particle_State{N}`"
-Base.show(io::IO, state::Many_Particle_State{N}) where {N} = begin
+Base.show(io::IO, state::Many_Particle_State{N}) where {N} =
     for (i, ψ_single) in enumerate(state.single_particle_states)
         print(io, "$ψ_single")
         if i != N
             print(io, " ⊗ ")
         end
     end
-end
-"add a method to conveniently construct `Many_Particle_State{S,N}` with a tuple of single-particle states"
-Many_Particle_State(single_particle_states::NTuple{N,<:Single_Particle_State{S}}) where {N<:Integer,S<:Quantum_Statistics} = Many_Particle_State{N,S}(single_particle_states)
-Many_Particle_State(single_particle_states::Vector{<:Single_Particle_State{S}}) where {S<:Quantum_Statistics} = Many_Particle_State{length(single_particle_states),S}(Tuple(single_particle_states))
+
+"constructor of `Many_Particle_State` with a vector of single-particle states"
+Many_Particle_State(single_particle_states::Vector{<:Single_Particle_State}) = Many_Particle_State(SVector{length(single_particle_states)}(single_particle_states))
+"constructor of `Many_Particle_State` with a tuple of single-particle states"
+Many_Particle_State(single_particle_states::NTuple{N,<:Single_Particle_State}) where {N} = Many_Particle_State(collect(single_particle_states))
