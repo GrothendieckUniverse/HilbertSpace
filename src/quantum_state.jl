@@ -4,12 +4,12 @@
 """
 General Single-Particle State `Single_Particle_State{D}` <: Abstract_State`
 ---
-with `D<:Int` the number of physical d.o.f.
+with `D<:Int` the number of physical dof.
 - Fields:
-    - `dof_indices::Tuple`: tuple of indices to each physical d.o.f
+    - `dof_indices::Tuple`: tuple of indices to each physical dof
 """
 struct Single_Particle_State{D} <: Abstract_State
-    dof_indices::NTuple{D,Int} # tuple of indices to each physical d.o.f
+    dof_indices::NTuple{D,Int} # tuple of indices to each physical dof
 end
 "add a show method for `Single_Particle_State`"
 Base.show(io::IO, state::Single_Particle_State{D}) where {D} = print(io, "|$(state.dof_indices)⟩")

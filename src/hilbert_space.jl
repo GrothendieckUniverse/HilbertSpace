@@ -9,17 +9,17 @@ abstract type Finite_Dimensional_Hilbert_Space <: Abstract_Hilbert_Space end
 Struct `Finite_Dimensional_Single_Particle_Hilbert_Space <: Finite_Dimensional_Hilbert_Space`
 ---
 - Fields:
-    - `ndof`: number of d.o.f for the single-particle state
-    - `dof_name`: name of each d.o.f
-    - `dof_range_map`: hashmap from dof name to the index range of each d.o.f
+    - `ndof`: number of dof for the single-particle state
+    - `dof_range_map`: hashmap from dof name to the index range of each dof. The range here can be `Union{UnitRange{Int},NTuple{N,Int},AbstractVector{Int}} {N<:Int}`. We use `AbstractVector` rather than `Vector` because julia will automatically promote the type of `Vector` and `UnitRange` to `AbstractVector` for a dictionary
+    - `dof_name_list`: list of dof names (the order of the dof names is consistent with each single-particle state)
     - `state_list`: list of single-particle states
     - `nstate`: number of single-particle states
     - `state_to_index_map`: hashmap `single-particle state -> index`
 """
 struct Finite_Dimensional_Single_Particle_Hilbert_Space <: Finite_Dimensional_Hilbert_Space
-    ndof::Int # number of d.o.f for the single-particle state
-    dof_range_map::Dict{String,UnitRange{Int}} # hashmap from dof name to the index range of each d.o.f
-
+    ndof::Int # number of dof for the single-particle state
+    dof_range_map::Dict{String,<:Union{UnitRange{Int},NTuple{N,Int},AbstractVector{Int}} where {N<:Int}} # hashmap from dof name to the index range of each dof.  The range here can be `Union{UnitRange{Int},NTuple{N,Int},AbstractVector{Int}} {N<:Int}`. We use `AbstractVector` rather than `Vector` because julia will automatically promote the type of `Vector` and `UnitRange` to `AbstractVector` for a dictionary
+    dof_name_list::Vector{String} # list of dof names (the order of the dof names is consistent with each single-particle state)
     state_list::Vector{<:Single_Particle_State} # list of single-particle states
     nstate::Int # number of single-particle states
     state_to_index_map::Dict{<:Single_Particle_State,Int} # hashmap `single-particle state -> index`
@@ -29,11 +29,11 @@ end
 Constructor of `Finite_Dimensional_Single_Particle_Hilbert_Space`
 ---
 - Named Args:
-    - `dof_range_map::Dict{String,UnitRange{Int}}`: hashmap from dof name to the index range of each d.o.f
+    - `dof_range_map::Dict{String,<:Union{UnitRange{Int},NTuple{N,Int},AbstractVector{Int}}}`: hashmap from dof name to the index range of each dof. The range here can be `Union{UnitRange{Int},NTuple{N,Int},AbstractVector{Int}} {N<:Int}`. We use `AbstractVector` rather than `Vector` because julia will automatically promote the type of `Vector` and `UnitRange` to `AbstractVector` for a dictionary
 """
 function Finite_Dimensional_Single_Particle_Hilbert_Space(;
-    dof_range_map::Dict{String,UnitRange{Int}},
-)
+    dof_range_map::Dict{String,<:Union{UnitRange{Int},NTuple{N,Int},AbstractVector{Int}}},
+) where {N<:Int}
     ndof = length(keys(dof_range_map))
     dof_range_list = values(dof_range_map) |> collect
     dof_name_list = keys(dof_range_map) |> collect
@@ -49,6 +49,7 @@ function Finite_Dimensional_Single_Particle_Hilbert_Space(;
     return Finite_Dimensional_Single_Particle_Hilbert_Space(
         ndof,
         dof_range_map,
+        dof_name_list,
         single_particle_state_list,
         nstate,
         single_particle_state_to_index_map,
@@ -57,23 +58,7 @@ end
 
 
 
-# """
-# Struct `Finite_Dimensional_Multi_Particle_Hilbert_Space <: Finite_Dimensional_Hilbert_Space`
-# ---
-# - Fields:
-#     - `ndof`: number of d.o.f for the single-particle state
-#     - `dof_range_map`: hashmap from dof name to the index range of each d.o.f for the single-particle state
-#     - `nparticle`: number of particles
-#     - `state_list`: list of multi-particle states. Here we would like to arrange each multi-particle state `(s1,s2,...)` in a way such that `s1<=s2<=...` to save memory (this may also be helpful for fermionic parity if necessary)
-#     - `nstate`: number of multi-particle states
-#     - `state_to_index_map`: hashmap `multi-particle state -> index`
-# """
-# struct Finite_Dimensional_Multi_Particle_Hilbert_Space{D} <: Finite_Dimensional_Hilbert_Space where {D<:Int}
-#     nparticle::Int # number of particles
-#     state_list::Vector{<:NTuple{D,<:Single_Particle_State}} # list of multi-particle states. Here we would like to arrange each multi-particle state `(s1,s2,...)` in a way such that `s1<=s2<=...` to save memory (this may also be helpful for fermionic parity if necessary)
-#     nstate::Int # number of multi-particle states
-#     state_to_index_map::Dict{<:NTuple{D,<:Single_Particle_State},<:Int} # hashmap `multi-particle state -> index`
-# end
+
 
 
 
