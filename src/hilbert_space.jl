@@ -10,7 +10,7 @@ Struct `Finite_Dimensional_Single_Particle_Hilbert_Space <: Finite_Dimensional_H
 ---
 - Fields:
     - `ndof`: number of dof for the single-particle state
-    - `dof_range_map`: hashmap from dof name to the index range of each dof. The range here can be `Union{UnitRange{Int},NTuple{N,Int},AbstractVector{Int}} {N<:Int}`. We use `AbstractVector` rather than `Vector` because julia will automatically promote the type of `Vector` and `UnitRange` to `AbstractVector` for a dictionary
+    - `dof_name_to_range_pair_list`: list of pair `dof_name::String => dof_range::Vector{Int}`. Here we want to keep the input order of each pair and the constructed single-particle state. So instead of using dictionary, here we choose to use vector of pairs
     - `dof_name_list`: list of dof names (the order of the dof names is consistent with each single-particle state)
     - `state_list`: list of single-particle states
     - `nstate`: number of single-particle states
@@ -18,7 +18,7 @@ Struct `Finite_Dimensional_Single_Particle_Hilbert_Space <: Finite_Dimensional_H
 """
 struct Finite_Dimensional_Single_Particle_Hilbert_Space <: Finite_Dimensional_Hilbert_Space
     ndof::Int # number of dof for the single-particle state
-    dof_range_map::Dict{String,<:Union{UnitRange{Int},NTuple{N,Int},AbstractVector{Int}} where {N<:Int}} # hashmap from dof name to the index range of each dof.  The range here can be `Union{UnitRange{Int},NTuple{N,Int},AbstractVector{Int}} {N<:Int}`. We use `AbstractVector` rather than `Vector` because julia will automatically promote the type of `Vector` and `UnitRange` to `AbstractVector` for a dictionary
+    dof_name_to_range_pair_list::Vector{<:Pair{String,<:Vector{Int}}} # list of pair `dof_name::String => dof_range::Vector{Int}`. Here we want to keep the input order of each pair and the constructed single-particle state. So instead of using dictionary, here we choose to use vector of pairs
     dof_name_list::Vector{String} # list of dof names (the order of the dof names is consistent with each single-particle state)
     state_list::Vector{<:Single_Particle_State} # list of single-particle states
     nstate::Int # number of single-particle states
@@ -29,14 +29,14 @@ end
 Constructor of `Finite_Dimensional_Single_Particle_Hilbert_Space`
 ---
 - Named Args:
-    - `dof_range_map::Dict{String,<:Union{UnitRange{Int},NTuple{N,Int},AbstractVector{Int}}}`: hashmap from dof name to the index range of each dof. The range here can be `Union{UnitRange{Int},NTuple{N,Int},AbstractVector{Int}} {N<:Int}`. We use `AbstractVector` rather than `Vector` because julia will automatically promote the type of `Vector` and `UnitRange` to `AbstractVector` for a dictionary
+    - `dof_name_to_range_pair_list::Dict{String,<:Vector{Int}}`: list of pair `dof_name::String => dof_range::Vector{Int}`
 """
 function Finite_Dimensional_Single_Particle_Hilbert_Space(;
-    dof_range_map::Dict{String,<:Union{UnitRange{Int},NTuple{N,Int},AbstractVector{Int}}},
-) where {N<:Int}
-    ndof = length(keys(dof_range_map))
-    dof_range_list = values(dof_range_map) |> collect
-    dof_name_list = keys(dof_range_map) |> collect
+    dof_name_to_range_pair_list::Vector{<:Pair{String,<:Vector{Int}}},
+)
+    ndof = length(dof_name_to_range_pair_list)
+    dof_range_list = last.(dof_name_to_range_pair_list)
+    dof_name_list = first.(dof_name_to_range_pair_list)
 
     single_particle_state_list = [Single_Particle_State(finite_dof_indices) for finite_dof_indices in Iterators.product(dof_range_list...)] |> vec # force it to be vector of single-particle states
 
@@ -48,17 +48,13 @@ function Finite_Dimensional_Single_Particle_Hilbert_Space(;
 
     return Finite_Dimensional_Single_Particle_Hilbert_Space(
         ndof,
-        dof_range_map,
+        dof_name_to_range_pair_list,
         dof_name_list,
         single_particle_state_list,
         nstate,
         single_particle_state_to_index_map,
     )
 end
-
-
-
-
 
 
 
